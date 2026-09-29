@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-code-intelligence"
+version = "0.1.0"
+description = "Evidence-grounded, Bedrock-powered deployment intelligence for Node.js microservices."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "Proprietary" }
+authors = [{ name = "HUL HUB PRIVATE LTD" }]
+dependencies = [
+  "boto3>=1.40,<2",
+  "neo4j>=5.28,<7",
+  "pgvector>=0.4,<1",
+  "psycopg[binary,pool]>=3.2,<4",
+  "pydantic>=2.11,<3",
+  "PyYAML>=6,<7",
+  "strawberry-graphql[fastapi]>=0.280,<1",
+  "typer>=0.16,<1",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.17,<2",
+  "pytest>=8.4,<10",
+  "pytest-cov>=6,<8",
+  "ruff>=0.12,<1",
+  "types-PyYAML>=6,<7",
+]
+
+[project.scripts]
+code-intel = "ai_code_intelligence.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ai_code_intelligence"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers -p no:cacheprovider"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 110
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "ASYNC", "C4", "DTZ", "PTH"]
+ignore = ["B008", "E501", "UP046"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["ai_code_intelligence"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["boto3", "botocore", "botocore.*"]
+ignore_missing_imports = true

@@ -1,0 +1,175 @@
+x-app-environment: &app-environment
+  AWS_REGION: ${AWS_REGION:-us-west-2}
+  AWS_PROFILE: ${AWS_PROFILE:-default}
+  BEDROCK_ANALYSIS_MODEL_ID: ${BEDROCK_ANALYSIS_MODEL_ID:-zai.glm-5}
+  BEDROCK_ANALYSIS_CONTEXT_WINDOW_TOKENS: ${BEDROCK_ANALYSIS_CONTEXT_WINDOW_TOKENS:-200000}
+  BEDROCK_ANALYSIS_MAX_OUTPUT_TOKENS: ${BEDROCK_ANALYSIS_MAX_OUTPUT_TOKENS:-128000}
+  BEDROCK_CHAT_MODEL_ID: ${BEDROCK_CHAT_MODEL_ID:-openai.gpt-oss-120b-1:0}
+  BEDROCK_EMBEDDING_MODEL_ID: ${BEDROCK_EMBEDDING_MODEL_ID:-amazon.titan-embed-text-v2:0}
+  BEDROCK_CONNECT_TIMEOUT_SECONDS: ${BEDROCK_CONNECT_TIMEOUT_SECONDS:-10}
+  BEDROCK_READ_TIMEOUT_SECONDS: ${BEDROCK_READ_TIMEOUT_SECONDS:-3600}
+  BEDROCK_RETRY_MAX_ATTEMPTS: ${BEDROCK_RETRY_MAX_ATTEMPTS:-6}
+  NEO4J_PASSWORD: ${NEO4J_PASSWORD:-change-me-now}
+  POSTGRES_URL: postgresql://codeintel:${POSTGRES_PASSWORD:-change-me}@postgres:5432/codeintel
+  S3_BUCKET: ${S3_BUCKET:-beelinks-code-knowledgebase}
+  GITLAB_ALLOWED_HOSTS: ${GITLAB_ALLOWED_HOSTS:-gitlab.com}
+  GITLAB_TOKEN: ${GITLAB_TOKEN:-}
+  JIRA_ALLOWED_HOSTS: ${JIRA_ALLOWED_HOSTS:-}
+  JIRA_CLOUD_API_TOKEN: ${JIRA_CLOUD_API_TOKEN:-}
+  JIRA_DATA_CENTER_PAT: ${JIRA_DATA_CENTER_PAT:-}
+  CODE_INTEL_API_KEY: ${CODE_INTEL_API_KEY}
+
+x-app-volumes: &app-volumes
+  - ${USERPROFILE:-~}/.aws:/home/app/.aws:ro
+  - app-artifacts:/app/artifacts
+  - repository-data:/app/repositories
+
+x-internal-environment: &internal-environment
+  <<: *app-environment
+  NEO4J_INTERNAL_PASSWORD: ${NEO4J_INTERNAL_PASSWORD:-${NEO4J_PASSWORD:-change-me-now}}
+  CODE_INTEL_INTERNAL_API_KEY: ${CODE_INTEL_INTERNAL_API_KEY:-${CODE_INTEL_API_KEY}}
+
+x-internal-volumes: &internal-volumes
+  - ${USERPROFILE:-~}/.aws:/home/app/.aws:ro
+  - internal-artifacts:/app/internal-artifacts
+  - internal-repository-data:/app/internal-repositories
+  - .:/app/self-source:ro
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: codeintel
+      POSTGRES_USER: codeintel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codeintel -d codeintel"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  neo4j:
+    image: neo4j:5.26-community
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-change-me-now}
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1G
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  neo4j-internal:
+    profiles: [codex-internal]
+    image: neo4j:5.26-community
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_INTERNAL_PASSWORD:-${NEO4J_PASSWORD:-change-me-now}}
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 768m
+    ports:
+      - "127.0.0.1:7475:7474"
+      - "127.0.0.1:7688:7687"
+    volumes:
+      - neo4j-internal-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build: .
+    command: ["code-intel", "migrate", "--config", "/app/config/container.yaml"]
+    environment: *app-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build: .
+    environment: *app-environment
+    ports:
+      - "4000:4000"
+    volumes: *app-volumes
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      neo4j:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: ["code-intel", "worker", "--config", "/app/config/container.yaml"]
+    environment: *app-environment
+    volumes: *app-volumes
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      neo4j:
+        condition: service_healthy
+
+  internal-migrate:
+    profiles: [codex-internal]
+    build: .
+    command: ["code-intel", "migrate", "--config", "/app/config/internal.yaml"]
+    environment: *internal-environment
+    volumes:
+      - ${USERPROFILE:-~}/.aws:/home/app/.aws:ro
+      - app-artifacts:/app/artifacts
+      - internal-artifacts:/app/internal-artifacts
+      - internal-repository-data:/app/internal-repositories
+      - .:/app/self-source:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j-internal:
+        condition: service_healthy
+
+  internal-app:
+    profiles: [codex-internal]
+    build: .
+    command: ["code-intel", "serve", "--config", "/app/config/internal.yaml"]
+    environment: *internal-environment
+    ports:
+      - "127.0.0.1:4100:4100"
+    volumes: *internal-volumes
+    depends_on:
+      internal-migrate:
+        condition: service_completed_successfully
+      neo4j-internal:
+        condition: service_healthy
+
+  internal-worker:
+    profiles: [codex-internal]
+    build: .
+    command: ["code-intel", "worker", "--config", "/app/config/internal.yaml"]
+    environment: *internal-environment
+    volumes: *internal-volumes
+    restart: unless-stopped
+    depends_on:
+      internal-migrate:
+        condition: service_completed_successfully
+      neo4j-internal:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  neo4j-data:
+  neo4j-internal-data:
+  app-artifacts:
+  repository-data:
+  internal-artifacts:
+  internal-repository-data:
+

@@ -1,0 +1,98 @@
+version: 1
+repositories: []
+scanner:
+  ignored_directories:
+    [node_modules, dist, build, coverage, .git, .venv, artifacts, __pycache__, .pytest_cache, .ruff_cache, .mypy_cache]
+  max_file_bytes: 2000000
+  max_repository_files: 100000
+  max_repository_bytes: 2000000000
+agents:
+  native_structured_output: true
+  adaptive_thinking: false
+  validation_retries: 1
+  max_batch_characters: 80000
+  max_files_per_batch: 3
+  chunk_overlap_lines: 30
+  max_discovery_characters: 150000
+  max_knowledge_context_characters: 180000
+  max_concurrent_invocations: 3
+  audit_passes: 1
+  max_output_tokens: 32768
+  effort: high
+  strict_evidence: true
+  max_evidence_rejection_ratio: 0.5
+  guardrail_identifier_env: BEDROCK_GUARDRAIL_ID
+  guardrail_version_env: BEDROCK_GUARDRAIL_VERSION
+aws:
+  region: us-west-2
+  analysis_model_id: zai.glm-5
+  analysis_context_window_tokens: 200000
+  analysis_max_output_tokens: 128000
+  embedding_model_id: amazon.titan-embed-text-v2:0
+  embedding_dimensions: 1024
+  connect_timeout_seconds: 10
+  read_timeout_seconds: 3600
+  retry_max_attempts: 6
+neo4j:
+  uri: neo4j://neo4j:7687
+  username: neo4j
+  password_env: NEO4J_PASSWORD
+  database: neo4j
+postgres:
+  connection_string_env: POSTGRES_URL
+  schema_name: code_intelligence
+knowledge:
+  driver: s3
+  local_directory: /app/artifacts/knowledge
+  s3_bucket_env: S3_BUCKET
+  s3_prefix: knowledge
+chat:
+  enabled: true
+  model_id: openai.gpt-oss-120b-1:0
+  context_window_tokens: 128000
+  max_output_tokens: 16000
+  max_context_characters: 180000
+  max_question_characters: 4000
+  max_history_messages: 8
+  retrieval_chunks: 12
+  chunk_size_characters: 8000
+  max_concurrent_requests: 2
+  graph_retrieval_enabled: true
+  graph_seed_nodes: 8
+  graph_max_nodes: 24
+  graph_max_relationships: 36
+  graph_evidence_characters: 2000
+embeddings:
+  enabled: true
+  chunk_size_characters: 12000
+  chunk_overlap_characters: 800
+  max_input_utf8_bytes: 7000
+analysis:
+  max_traversal_depth: 8
+  max_traversal_nodes: 10000
+  fail_closed_on_ai_error: true
+  report_directory: /app/artifacts/reports
+graphql:
+  host: 0.0.0.0
+  port: 4000
+  path: /graphql
+  api_key_env: CODE_INTEL_API_KEY
+  allow_introspection: false
+gitlab:
+  checkout_root: /app/repositories
+  allowed_hosts: [gitlab.com]
+  token_env: GITLAB_TOKEN
+  username: oauth2
+  clone_timeout_seconds: 900
+  fetch_timeout_seconds: 600
+jira:
+  allowed_hosts: []
+  local_path: /app/artifacts/jira-configuration.json
+  connect_timeout_seconds: 10
+  read_timeout_seconds: 30
+  max_response_bytes: 2000000
+repository_registry:
+  driver: postgres
+  local_path: /app/artifacts/repository-registry.json
+  worker_poll_seconds: 2
+  job_lease_seconds: 43200

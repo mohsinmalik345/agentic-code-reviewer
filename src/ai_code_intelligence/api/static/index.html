@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Operate the AI Code Intelligence repository knowledge graph.">
+    <title>AI Code Intelligence</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+    <main id="login-view" class="login-shell">
+      <section class="login-story" aria-labelledby="login-title">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <p class="eyebrow">Deployment intelligence / control plane</p>
+        <h1 id="login-title">Understand the blast radius <em>before</em> it ships.</h1>
+        <p class="login-lede">
+          Turn every GitLab repository into an evidence-backed knowledge base and a connected
+          Neo4j dependency graph.
+        </p>
+        <div class="signal-strip" aria-label="Platform capabilities">
+          <span><i></i> AST evidence</span>
+          <span><i></i> Graph traversal</span>
+          <span><i></i> Bedrock reasoning</span>
+        </div>
+      </section>
+
+      <section class="login-panel" aria-labelledby="access-title">
+        <div class="login-card">
+          <p class="panel-index">01 / AUTHENTICATE</p>
+          <h2 id="access-title">Operations access</h2>
+          <p>Enter the API key configured on this deployment. It is exchanged for a secure session and is never stored by this browser.</p>
+          <form id="login-form" novalidate>
+            <label for="api-key">API key</label>
+            <div class="secret-field">
+              <input id="api-key" name="apiKey" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required aria-describedby="login-error">
+              <button id="toggle-key" class="icon-button" type="button" aria-label="Show API key">Show</button>
+            </div>
+            <p id="login-error" class="form-error" role="alert"></p>
+            <button class="button button-primary button-wide" type="submit">
+              <span>Open control plane</span><span aria-hidden="true">&#8599;</span>
+            </button>
+          </form>
+          <p class="security-note"><span aria-hidden="true">&#9670;</span> Session protected &middot; credentials stay out of browser storage</p>
+        </div>
+      </section>
+    </main>
+
+    <div id="dashboard-view" class="app-shell" hidden>
+      <header class="topbar">
+        <a class="wordmark" href="#overview" aria-label="AI Code Intelligence home">
+          <span class="wordmark-symbol" aria-hidden="true">CI</span>
+          <span><strong>Code Intelligence</strong><small>Operations console</small></span>
+        </a>
+        <div class="topbar-actions">
+          <div id="system-status" class="system-status" role="status">
+            <span class="status-light"></span>
+            <span>Connecting</span>
+          </div>
+          <button id="refresh-button" class="icon-button command-button" type="button" title="Refresh dashboard" aria-label="Refresh dashboard">Refresh</button>
+          <button id="logout-button" class="button button-quiet" type="button">Sign out</button>
+        </div>
+      </header>
+
+      <aside class="sidebar" aria-label="Primary navigation">
+        <nav>
+          <a class="nav-link active" href="#overview" aria-current="page"><span>01</span> Overview</a>
+          <a class="nav-link" href="#repositories"><span>02</span> Repositories</a>
+          <a class="nav-link" href="#activity"><span>03</span> Activity</a>
+          <a class="nav-link" href="#jira-integration"><span>04</span> Jira integration</a>
+          <a class="nav-link" href="#architecture-chat"><span>05</span> Architecture chat</a>
+        </nav>
+        <div class="sidebar-foot">
+          <span class="mono-label">INDEXING ENGINE</span>
+          <strong id="engine-model">Loading...</strong>
+          <small id="engine-mode">Awaiting health check</small>
+        </div>
+      </aside>
+
+      <main id="main-content" class="workspace" tabindex="-1">
+        <section id="overview" class="workspace-section hero-section" aria-labelledby="overview-title">
+          <div class="hero-copy">
+            <p class="eyebrow">System intelligence / live portfolio</p>
+            <h1 id="overview-title">Your codebase,<br><em>mapped and legible.</em></h1>
+            <p>Onboard a repository to scan its structure, update the shared dependency graph, and publish repository and central knowledge bases.</p>
+          </div>
+          <div class="hero-actions">
+            <button id="open-onboard" class="button button-primary" type="button"><span aria-hidden="true">+</span> Add GitLab repository</button>
+            <button id="open-central-knowledge" class="button button-secondary" type="button">Central knowledge</button>
+            <button id="reindex-all" class="button button-secondary" type="button">Reindex portfolio</button>
+          </div>
+        </section>
+
+        <section class="metrics-grid" aria-label="Portfolio metrics">
+          <article class="metric-card accent-card">
+            <span class="metric-label">Repositories</span>
+            <strong id="metric-repositories" class="metric-value">&mdash;</strong>
+            <small id="metric-indexed">Loading catalogue</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Graph nodes</span>
+            <strong id="metric-nodes" class="metric-value">&mdash;</strong>
+            <small>Deterministic code entities</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Relationships</span>
+            <strong id="metric-relationships" class="metric-value">&mdash;</strong>
+            <small>Evidence-backed connections</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Active jobs</span>
+            <strong id="metric-jobs" class="metric-value">&mdash;</strong>
+            <small id="metric-job-stage">Waiting for worker</small>
+          </article>
+        </section>
+
+        <section class="split-grid" aria-label="Graph and activity snapshot">
+          <article class="console-panel graph-panel">
+            <header class="panel-header">
+              <div><span class="panel-index">GRAPH / SNAPSHOT</span><h2>Dependency topology</h2></div>
+              <span id="graph-source" class="chip">Not loaded</span>
+            </header>
+            <div id="graph-visual" class="graph-visual" aria-label="Graph composition">
+              <div class="graph-orbit orbit-one"><span></span><span></span><span></span></div>
+              <div class="graph-orbit orbit-two"><span></span><span></span><span></span></div>
+              <div class="graph-core"><strong id="graph-core-count">0</strong><small>entities</small></div>
+            </div>
+            <div id="graph-types" class="type-bars" aria-live="polite"></div>
+          </article>
+
+          <article class="console-panel queue-panel">
+            <header class="panel-header">
+              <div><span class="panel-index">WORKER / QUEUE</span><h2>Latest activity</h2></div>
+              <a href="#activity" class="text-link">View all</a>
+            </header>
+            <div id="jobs-preview" class="job-list compact-list" aria-live="polite">
+              <div class="empty-state small"><span aria-hidden="true">&#9711;</span><p>Waiting for job data...</p></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="repositories" class="workspace-section catalogue-section" aria-labelledby="repositories-title">
+          <header class="section-header">
+            <div><span class="panel-index">REPOSITORY / CATALOGUE</span><h2 id="repositories-title">Indexed services</h2></div>
+            <button id="open-onboard-secondary" class="button button-secondary" type="button">Add repository</button>
+          </header>
+          <div id="repository-list" class="repository-grid" aria-live="polite" aria-busy="true">
+            <article class="repository-card skeleton-card" aria-label="Loading repository"></article>
+            <article class="repository-card skeleton-card" aria-label="Loading repository"></article>
+          </div>
+        </section>
+
+        <section id="activity" class="workspace-section activity-section" aria-labelledby="activity-title">
+          <header class="section-header">
+            <div><span class="panel-index">INDEXING / ACTIVITY</span><h2 id="activity-title">Job history</h2></div>
+            <span id="polling-state" class="chip"><i></i> Live polling</span>
+          </header>
+          <div id="job-list" class="job-list" aria-live="polite" aria-busy="true"></div>
+          <nav id="job-pagination" class="job-pagination" aria-label="Job history pages" hidden>
+            <p id="job-page-summary">Showing recent indexing jobs</p>
+            <div class="job-page-controls">
+              <button id="job-page-previous" class="button button-quiet" type="button">Previous</button>
+              <span id="job-page-indicator" aria-live="polite">Page 1 of 1</span>
+              <button id="job-page-next" class="button button-quiet" type="button">Next</button>
+            </div>
+          </nav>
+        </section>
+
+        <section id="jira-integration" class="workspace-section jira-section" aria-labelledby="jira-title">
+          <header class="section-header jira-section-header">
+            <div>
+              <span class="panel-index">INTEGRATIONS / JIRA</span>
+              <h2 id="jira-title">Jira configuration</h2>
+              <p>Connect Jira instances and map indexed repositories to the projects that define their requirements.</p>
+            </div>
+            <button id="refresh-jira" class="button button-secondary" type="button">Refresh Jira config</button>
+          </header>
+
+          <aside class="jira-security-note" aria-label="Jira credential security">
+            <span aria-hidden="true">&#9670;</span>
+            <div>
+              <strong>Credentials stay server-side.</strong>
+              <p>Enter only the name of an environment variable below. Set the secret in that server environment variable; the token itself never reaches this browser or the database.</p>
+            </div>
+          </aside>
+
+          <div class="jira-layout">
+            <article class="jira-panel">
+              <header class="panel-header">
+                <div><span class="panel-index">JIRA / CONNECTIONS</span><h3>Instances</h3></div>
+                <button id="new-jira-connection" class="button button-quiet" type="button">New connection</button>
+              </header>
+
+              <form id="jira-connection-form" class="jira-form" novalidate>
+                <div class="jira-form-heading">
+                  <div><span class="mono-label">CONNECTION / DETAILS</span><h4 id="jira-connection-form-title">Add a Jira connection</h4></div>
+                  <span id="jira-connection-editing" class="chip" hidden>Editing</span>
+                </div>
+                <div class="form-grid">
+                  <label class="field">Connection ID <span>*</span>
+                    <input name="id" type="text" placeholder="engineering-jira" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,127}" maxlength="128" autocomplete="off" required>
+                    <span class="field-hint">Stable identifier; letters, numbers, dots, underscores, and hyphens.</span>
+                  </label>
+                  <label class="field">Display name <span>*</span>
+                    <input name="name" type="text" placeholder="Engineering Jira" maxlength="200" required>
+                  </label>
+                  <label class="field">Edition <span>*</span>
+                    <select name="edition" required>
+                      <option value="cloud">Cloud</option>
+                      <option value="data_center">Data Center</option>
+                    </select>
+                  </label>
+                  <label class="field">Authentication <span>*</span>
+                    <select name="authType" required>
+                      <option value="api_token">API token</option>
+                      <option value="personal_access_token">Personal access token</option>
+                    </select>
+                  </label>
+                  <label class="field field-wide">Base URL <span>*</span>
+                    <input name="baseUrl" type="url" placeholder="https://company.atlassian.net" autocomplete="url" required>
+                    <span class="field-hint">Use the Jira site root without an issue or project path.</span>
+                  </label>
+                  <label id="jira-username-field" class="field field-wide">Cloud username / email <span>*</span>
+                    <input name="username" type="email" placeholder="developer@company.com" autocomplete="username">
+                    <span class="field-hint">Required for Jira Cloud API-token authentication.</span>
+                  </label>
+                  <label class="field field-wide">Credential environment variable <span>*</span>
+                    <input name="credentialEnv" type="text" placeholder="JIRA_API_TOKEN" pattern="[A-Za-z_][A-Za-z0-9_]*" maxlength="128" autocomplete="off" spellcheck="false" required>
+                    <span class="field-hint">Variable name only. Never paste the secret or token into this form.</span>
+                  </label>
+                  <label class="toggle-field field-wide">
+                    <input name="enabled" type="checkbox" checked>
+                    <span><strong>Enabled</strong><small>Allow this connection to be used for Jira requirement lookups.</small></span>
+                  </label>
+                </div>
+                <p id="jira-connection-error" class="form-error" role="alert"></p>
+                <div id="jira-test-result" class="jira-test-result" aria-live="polite" hidden></div>
+                <footer class="jira-form-actions">
+                  <button id="cancel-jira-connection-edit" class="button button-quiet" type="button" hidden>Cancel edit</button>
+                  <button class="button button-primary" type="submit">Save connection</button>
+                </footer>
+              </form>
+
+              <div id="jira-connection-list" class="jira-list" aria-live="polite" aria-busy="true">
+                <div class="empty-state small"><span aria-hidden="true">&#9711;</span><p>Loading Jira connections...</p></div>
+              </div>
+            </article>
+
+            <article class="jira-panel">
+              <header class="panel-header">
+                <div><span class="panel-index">JIRA / PROJECT MAP</span><h3>Repository mappings</h3></div>
+              </header>
+
+              <form id="jira-mapping-form" class="jira-form" novalidate>
+                <div class="jira-form-heading">
+                  <div><span class="mono-label">MAPPING / DETAILS</span><h4>Map a repository</h4></div>
+                </div>
+                <div class="form-grid">
+                  <label class="field">Jira connection <span>*</span>
+                    <select id="jira-mapping-connection" name="connectionId" required>
+                      <option value="">Loading connections...</option>
+                    </select>
+                  </label>
+                  <label class="field">Repository <span>*</span>
+                    <select id="jira-mapping-repository" name="repositoryId" required>
+                      <option value="">Loading repositories...</option>
+                    </select>
+                  </label>
+                  <label class="field field-wide">Jira project key <span>*</span>
+                    <input name="jiraProjectKey" type="text" placeholder="PLATFORM" pattern="[A-Za-z][A-Za-z0-9_]*" maxlength="64" autocapitalize="characters" spellcheck="false" required>
+                  </label>
+                  <label class="field field-wide">Acceptance-criteria fields <small>comma-separated</small>
+                    <input name="acceptanceCriteriaFields" type="text" placeholder="description, customfield_10042" spellcheck="false">
+                    <span class="field-hint">Jira field IDs or names to search, in priority order.</span>
+                  </label>
+                  <label class="field field-wide">Issue-key regular expression <span>*</span>
+                    <input name="issueKeyPattern" type="text" value="\b[A-Z][A-Z0-9]+-\d+\b" maxlength="500" spellcheck="false" required>
+                    <span class="field-hint">Used to discover Jira issue keys in branch names, commits, and merge requests.</span>
+                  </label>
+                </div>
+                <p id="jira-mapping-error" class="form-error" role="alert"></p>
+                <footer class="jira-form-actions">
+                  <button id="save-jira-mapping" class="button button-primary" type="submit">Save mapping</button>
+                </footer>
+              </form>
+
+              <div id="jira-mapping-list" class="jira-list" aria-live="polite" aria-busy="true">
+                <div class="empty-state small"><span aria-hidden="true">&#9711;</span><p>Loading repository mappings...</p></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="architecture-chat" class="workspace-section chat-section" aria-labelledby="chat-title">
+          <header class="section-header chat-section-header">
+            <div><span class="panel-index">KNOWLEDGE / GPT-OSS</span><h2 id="chat-title">Ask about the architecture</h2></div>
+            <div class="chat-controls">
+              <label for="chat-scope">Knowledge scope</label>
+              <select id="chat-scope" aria-label="Architecture chat knowledge scope">
+                <option value="">All repositories + central</option>
+              </select>
+              <button id="chat-clear" class="button button-quiet" type="button">Clear chat</button>
+            </div>
+          </header>
+          <article class="chat-console">
+            <div id="chat-messages" class="chat-messages" aria-live="polite">
+              <div class="chat-welcome">
+                <span aria-hidden="true">AI</span>
+                <div>
+                  <h3>Grounded answers from knowledge + Neo4j</h3>
+                  <p>Ask about service boundaries, functions, endpoints, events, database usage, or cross-service dependencies. Answers distinguish reader sections from exact graph evidence.</p>
+                </div>
+              </div>
+            </div>
+            <form id="chat-form" class="chat-composer">
+              <label for="chat-question">Architecture question</label>
+              <div class="chat-input-row">
+                <textarea id="chat-question" name="question" rows="3" maxlength="4000" placeholder="How do the email and socket services communicate?" required></textarea>
+                <button id="chat-send" class="button button-primary" type="submit">Ask GPT-OSS</button>
+              </div>
+              <div class="chat-composer-meta">
+                <p id="chat-error" class="form-error" role="alert"></p>
+                <span id="chat-model">Loading chat model...</span>
+              </div>
+            </form>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="onboard-dialog" class="modal">
+      <form id="onboard-form" class="modal-card" method="dialog" novalidate>
+        <header class="modal-header">
+          <div><span class="panel-index">NEW / KNOWLEDGE SOURCE</span><h2>Add GitLab repositories</h2></div>
+          <button class="icon-button modal-close" type="button" data-close-dialog="onboard-dialog" aria-label="Close">Close</button>
+        </header>
+        <p class="modal-intro">Add one or more repositories in one atomic registration. The worker creates one portfolio job, indexes only new or changed commits, reuses unchanged artifacts, and refreshes central or cross-service knowledge only when affected.</p>
+        <div id="onboard-repository-rows" class="onboard-repository-rows"></div>
+        <button id="add-onboard-repository" class="button button-quiet add-repository-button" type="button"><span aria-hidden="true">+</span> Add another repository</button>
+        <p id="onboard-row-count" class="field-hint" aria-live="polite"></p>
+        <p id="onboard-error" class="form-error" role="alert"></p>
+        <footer class="modal-actions">
+          <button class="button button-quiet" type="button" data-close-dialog="onboard-dialog">Cancel</button>
+          <button class="button button-primary" type="submit">Add and start indexing</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <template id="onboard-repository-template">
+      <fieldset class="onboard-repository-row" data-onboard-row>
+        <legend><span data-onboard-row-title>Repository</span><button class="button button-quiet remove-repository-button" type="button" data-remove-onboard-row>Remove</button></legend>
+        <div class="form-grid">
+          <label class="field field-wide">GitLab clone URL <span>*</span>
+            <input name="gitlabUrl" type="url" placeholder="https://gitlab.example.com/group/service.git" autocomplete="url" required>
+          </label>
+          <label class="field">Repository ID <small>optional</small>
+            <input name="repositoryId" type="text" placeholder="derived-from-url" pattern="[a-z0-9][a-z0-9-]{0,62}">
+            <span class="field-hint">Lowercase letters, numbers, and hyphens.</span>
+          </label>
+          <label class="field">Display name <small>optional</small>
+            <input name="name" type="text" placeholder="WhatsApp Middleware" maxlength="200">
+          </label>
+          <label class="field">Git ref <small>optional</small>
+            <input name="ref" type="text" placeholder="default branch" maxlength="255">
+          </label>
+          <label class="field field-wide">Description <small>optional</small>
+            <textarea name="description" rows="2" maxlength="4000" placeholder="What this service owns and why it exists"></textarea>
+          </label>
+        </div>
+      </fieldset>
+    </template>
+
+    <dialog id="knowledge-dialog" class="knowledge-modal">
+      <article class="knowledge-card">
+        <header class="knowledge-header">
+          <div><span id="knowledge-kicker" class="panel-index">KNOWLEDGE / DOCUMENT</span><h2 id="knowledge-title">Knowledge base</h2></div>
+          <div class="knowledge-actions">
+            <div class="document-mode" role="group" aria-label="Knowledge document edition">
+              <button id="knowledge-reader" class="mode-button active" type="button" aria-pressed="true">Reader</button>
+              <button id="knowledge-evidence" class="mode-button" type="button" aria-pressed="false">Evidence</button>
+            </div>
+            <button id="knowledge-copy" class="button button-quiet" type="button">Copy text</button>
+            <button class="icon-button" type="button" data-close-dialog="knowledge-dialog" aria-label="Close knowledge viewer">Close</button>
+          </div>
+        </header>
+        <div id="knowledge-meta" class="knowledge-meta"></div>
+        <div id="knowledge-content" class="markdown-view" tabindex="0" aria-live="polite"></div>
+      </article>
+    </dialog>
+
+    <dialog id="job-log-dialog" class="modal job-log-modal">
+      <article class="job-log-card">
+        <header class="modal-header">
+          <div><span class="panel-index">WORKER / EVENT LOG</span><h2 id="job-log-title">Indexing job log</h2></div>
+          <button class="icon-button" type="button" data-close-dialog="job-log-dialog" aria-label="Close job log">Close</button>
+        </header>
+        <div id="job-log-meta" class="knowledge-meta"></div>
+        <div id="job-log-content" class="job-event-list" aria-live="polite"></div>
+      </article>
+    </dialog>
+  </body>
+</html>
